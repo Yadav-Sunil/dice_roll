@@ -53,7 +53,13 @@ class Database {
       'last_seen': DateTime.now().millisecondsSinceEpoch,
     };
 
-    await databaseReference
+    DocumentReference documentReferencer = userCollection.doc(uid);
+    documentReferencer
+        .update(presenceStatusTrue)
+        .whenComplete(() => print('Updated your presence.'))
+        .catchError((e) => print(e));
+
+    /*await databaseReference
         .child(uid)
         .update(presenceStatusTrue)
         .whenComplete(() => print('Updated your presence.'))
@@ -65,6 +71,6 @@ class Database {
     };
     presence?
     await databaseReference.child(uid).update(presenceStatusTrue):
-    await databaseReference.child(uid).onDisconnect().update(presenceStatusFalse) ;
+    await databaseReference.child(uid).onDisconnect().update(presenceStatusFalse) ;*/
   }
 }

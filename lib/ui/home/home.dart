@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> signOut() async {
     bool signout = await googleSignOut();
     if (signout) {
-      await database.storeUserData(userData: null, presence: false);
+      await database.updateUserPresence(presence: false);
       Navigator.of(context).pushNamedAndRemoveUntil(
           RouteName.USER_LOGIN, (Route<dynamic> route) => false,
           arguments: LoginScreen());
