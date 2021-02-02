@@ -1,4 +1,5 @@
 import 'package:dice_app/service/authService.dart';
+import 'package:dice_app/ui/db/database.dart';
 import 'package:dice_app/utils/Images.dart';
 import 'package:dice_app/utils/routeNames.dart';
 import 'package:dice_app/utils/screen_util.dart';
@@ -12,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final Database database = Database();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _userLoginFormKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
@@ -145,32 +147,26 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           InkWell(
-                              child: Container(
-                                  margin: EdgeInsets.only(
-                                      top: ScreenUtil().setHeight(20)),
-                                  width: ScreenUtil()
-                                      .setWidth(ScreenUtil.screenWidth / 2),
-                                  height: ScreenUtil().setHeight(50),
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(5),
-                                      color: Colors.black),
-                                  child: Center(
-                                    child: Text(
-                                      'Sign In',
-                                      style: TextStyle(
-                                          fontSize: ScreenUtil().setSp(16),
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white),
-                                    ),
-                                  )),
-                              onTap: () async {
-                                User user = await signIn(_emailController.text,
-                                    _passwordController.text, _scaffoldKey);
-                                print('-----------------${user.toString()}');
-                                // Navigator.of(context).pushNamedAndRemoveUntil
-                                //   (RouteName.Home, (Route<dynamic> route) => false
-                                // );
-                              }),
+                            child: Container(
+                                margin: EdgeInsets.only(
+                                    top: ScreenUtil().setHeight(20)),
+                                width: ScreenUtil()
+                                    .setWidth(ScreenUtil.screenWidth / 1.5),
+                                height: ScreenUtil().setHeight(50),
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(5),
+                                    color: Colors.black),
+                                child: Center(
+                                  child: Text(
+                                    'Sign In',
+                                    style: TextStyle(
+                                        fontSize: ScreenUtil().setSp(16),
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white),
+                                  ),
+                                )),
+                            onTap: () => _sign(),
+                          ),
                           InkWell(
                             onTap: () {
                               Navigator.of(context)
@@ -187,49 +183,43 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           InkWell(
-                              child: Container(
-                                  margin: EdgeInsets.only(
-                                      top: ScreenUtil().setHeight(20)),
-                                  width: ScreenUtil()
-                                      .setWidth(ScreenUtil.screenWidth / 2),
-                                  height: ScreenUtil().setHeight(50),
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(5),
-                                      color: Colors.black),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget>[
-                                      Container(
-                                        height: ScreenUtil().setHeight(30.0),
-                                        width: ScreenUtil().setWidth(30.0),
-                                        decoration: BoxDecoration(
-                                          image: DecorationImage(
-                                              image: AssetImage(Images.google),
-                                              fit: BoxFit.cover),
-                                          shape: BoxShape.circle,
-                                        ),
+                            child: Container(
+                                margin: EdgeInsets.only(
+                                    top: ScreenUtil().setHeight(20)),
+                                width: ScreenUtil()
+                                    .setWidth(ScreenUtil.screenWidth / 1.5),
+                                height: ScreenUtil().setHeight(50),
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(5),
+                                    color: Colors.black),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    Container(
+                                      height: ScreenUtil().setHeight(30.0),
+                                      width: ScreenUtil().setWidth(30.0),
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                            image: AssetImage(Images.google),
+                                            fit: BoxFit.cover),
+                                        shape: BoxShape.circle,
                                       ),
-                                      SizedBox(
-                                        width: ScreenUtil().setWidth(10),
-                                      ),
-                                      Text(
-                                        'Sign in with Google',
-                                        style: TextStyle(
-                                            fontSize: ScreenUtil().setSp(16),
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white),
-                                      ),
-                                    ],
-                                  )),
-                              onTap: () async {
-                                User user =
-                                    await signInWithGoogle(_scaffoldKey);
-                                print('-----------------${user.toString()}');
-                                // Navigator.of(context).pushNamedAndRemoveUntil
-                                //   (RouteName.Home, (Route<dynamic> route) => false
-                                // );
-                              }),
+                                    ),
+                                    SizedBox(
+                                      width: ScreenUtil().setWidth(10),
+                                    ),
+                                    Text(
+                                      'Sign in with Google',
+                                      style: TextStyle(
+                                          fontSize: ScreenUtil().setSp(16),
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white),
+                                    ),
+                                  ],
+                                )),
+                            onTap: () => _signInWithGoogle(),
+                          ),
                           SizedBox(height: 16),
                         ],
                       ),
@@ -244,21 +234,42 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _signInWithEmailAndPassword() async {
-    /*final FirebaseUser user = (await _auth.signInWithEmailAndPassword(
-      email: _emailController.text,
-      password: _passwordController.text,
-    )).user;
-
-    if (user != null) {
-      setState(() {
-        _success = true;
-        _userEmail = user.email;
-      });
+  void _signInWithGoogle() async {
+    User user = await signInWithGoogle();
+    if (user != null && user.emailVerified) {
+      await database
+          .storeUserData(userData: user)
+          .whenComplete(
+            () => Navigator.of(context).pushNamedAndRemoveUntil(
+                RouteName.Home, (Route<dynamic> route) => false,
+                arguments: user),
+          )
+          .catchError(
+            (e) => print('Error in storing data: $e'),
+          );
     } else {
-      setState(() {
-        _success = false;
-      });
-    }*/
+      final snackBar = SnackBar(content: Text('Email not verified'));
+      _scaffoldKey.currentState.showSnackBar(snackBar);
+    }
+  }
+
+  void _sign() async {
+    User user = await signIn(
+        email: _emailController.text, password: _passwordController.text);
+    if (user.emailVerified) {
+      await database
+          .storeUserData(userData: user)
+          .whenComplete(
+            () => Navigator.of(context).pushNamedAndRemoveUntil(
+            RouteName.Home, (Route<dynamic> route) => false,
+            arguments: user),
+      )
+          .catchError(
+            (e) => print('Error in storing data: $e'),
+      );
+    } else {
+      final snackBar = SnackBar(content: Text('Email not verified'));
+      _scaffoldKey.currentState.showSnackBar(snackBar);
+    }
   }
 }

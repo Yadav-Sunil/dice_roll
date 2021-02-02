@@ -16,7 +16,8 @@ class Routes {
       case RouteName.Register:
         return MaterialPageRoute(builder: (_) => RegisterScreen());
       case RouteName.Home:
-        return MaterialPageRoute(builder: (_) => HomeScreen());
+        return MaterialPageRoute(
+            builder: (_) => HomeScreen(user:settings?.arguments));
       default:
         return MaterialPageRoute(
           builder: (context) => Scaffold(
