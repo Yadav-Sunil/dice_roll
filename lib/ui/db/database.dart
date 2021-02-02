@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dice_app/model/diceroll.dart';
 import 'package:dice_app/model/user.dart';
 import 'package:dice_app/service/authService.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +11,8 @@ class Database {
   /// The main Firestore user collection
   final CollectionReference userCollection =
       FirebaseFirestore.instance.collection('users');
+  final CollectionReference diceRollCollection =
+      FirebaseFirestore.instance.collection('diceRoll');
   final DatabaseReference databaseReference =
       FirebaseDatabase.instance.reference();
 
@@ -17,9 +20,9 @@ class Database {
     DocumentReference documentReferencer = userCollection.doc(uid);
 
     UserModel user = UserModel(
+      payWith: '',
       userName: userData?.displayName,
       uid: uid,
-      name: userName,
       email: userData?.email,
       imageUrl: userData?.photoURL,
       presence: presence,
@@ -41,7 +44,37 @@ class Database {
   Stream<QuerySnapshot> retrieveUsers() {
     Stream<QuerySnapshot> queryUsers = userCollection
         // .where('uid', isNotEqualTo: uid)
-        .orderBy('last_seen', descending: true)
+        .where('presence', isEqualTo: true)
+        // .orderBy('last_seen', descending: true)
+        .snapshots();
+
+    return queryUsers;
+  }
+
+  storeRollUserData({@required DiceRollModel userData}) async {
+    var groupChatId;
+    String id = await getPeerUserId();
+    if (id.hashCode <= uid.hashCode) {
+      groupChatId = '$id-$uid';
+    } else {
+      groupChatId = '$uid-$id';
+    }
+    DocumentReference documentReferencer =
+        diceRollCollection.doc(groupChatId).collection(uid).doc(uid);
+
+    var data = userData.toJson();
+
+    await documentReferencer.set(data).whenComplete(() {
+      print("User data added");
+    }).catchError((e) => print(e));
+
+    updateUserPresence(presence: true);
+  }
+
+  Stream<QuerySnapshot> retrieveRollUsers() {
+    Stream<QuerySnapshot> queryUsers = diceRollCollection
+        // .where('presence', isEqualTo: true)
+        // .orderBy('last_seen', descending: true)
         .snapshots();
 
     return queryUsers;
@@ -58,19 +91,5 @@ class Database {
         .update(presenceStatusTrue)
         .whenComplete(() => print('Updated your presence.'))
         .catchError((e) => print(e));
-
-    /*await databaseReference
-        .child(uid)
-        .update(presenceStatusTrue)
-        .whenComplete(() => print('Updated your presence.'))
-        .catchError((e) => print(e));
-
-    Map<String, dynamic> presenceStatusFalse = {
-      'presence': presence,
-      'last_seen': DateTime.now().millisecondsSinceEpoch,
-    };
-    presence?
-    await databaseReference.child(uid).update(presenceStatusTrue):
-    await databaseReference.child(uid).onDisconnect().update(presenceStatusFalse) ;*/
   }
 }

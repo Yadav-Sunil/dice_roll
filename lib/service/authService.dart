@@ -14,6 +14,16 @@ String name;
 String email;
 String imageUrl;
 
+Future setPeerUserId(String id) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString('peerId',id);
+}
+
+Future<String> getPeerUserId() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getString('peerId')??'';
+}
+
 Future getUser() async {
   await Firebase.initializeApp();
 
@@ -157,6 +167,7 @@ Future<User> signInWithGoogle() async {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('auth', true);
+    prefs.setString('id', user.uid);
     authSignedIn = true;
 
     print('signInWithGoogle succeeded: $user');

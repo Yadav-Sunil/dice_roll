@@ -32,7 +32,6 @@ class _SplashState extends State<Splash> {
     }
   }
 
-
   Future getUserInfo() async {
     await getUser();
     setState(() {});
@@ -54,11 +53,12 @@ class _SplashState extends State<Splash> {
         allowFontScaling: true);
     return Scaffold(
       body: Center(
-          child: Image.asset(
-        Images.dice6,
-        width: ScreenUtil.screenWidth / 2,
-        height: ScreenUtil.screenWidth / 2,
-      )),
+        child: Image.asset(
+          Images.dice6,
+          width: ScreenUtil.screenWidth / 2,
+          height: ScreenUtil.screenWidth / 2,
+        ),
+      ),
     );
   }
 }
