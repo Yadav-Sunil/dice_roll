@@ -21,7 +21,7 @@ Future setPeerUserId(String id) async {
 
 Future<String> getPeerUserId() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  return prefs.getString('peerId')??'';
+  return prefs.getString('id')??'';
 }
 
 Future getUser() async {
@@ -77,6 +77,7 @@ Future<User> signUp(
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('auth', true);
+    prefs.setString('id', user.uid);
     authSignedIn = true;
 
     print('signInWithGoogle succeeded: $user');
@@ -121,6 +122,7 @@ Future<User> signIn({
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('auth', true);
+    prefs.setString('id', user.uid);
     authSignedIn = true;
 
     print('signInWithGoogle succeeded: $user');
@@ -167,10 +169,11 @@ Future<User> signInWithGoogle() async {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('auth', true);
+    prefs.setString('user_name', name);
     prefs.setString('id', user.uid);
     authSignedIn = true;
 
-    print('signInWithGoogle succeeded: $user');
+    print('signInWithGoogle succeeded: ${user.uid}');
 
     return currentUser;
   }

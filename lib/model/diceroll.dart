@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart';
+
 
 class DiceRollModel {
   String userName;
   String uid;
-  int currentRoll;
-  int rollCount;
-  int score;
+  num currentRoll;
+  num rollCount;
+  num score;
   bool isroll;
 
   DiceRollModel({
-    @required this.userName,
-    @required this.uid,
-    @required this.currentRoll,
-    @required this.rollCount,
-    @required this.score,
-    @required this.isroll,
+    this.userName,
+    this.uid,
+    this.currentRoll,
+    this.rollCount,
+    this.score,
+    this.isroll,
   });
 
   DiceRollModel.fromJson(Map<String, dynamic> json) {

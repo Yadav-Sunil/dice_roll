@@ -3,7 +3,6 @@ import 'package:dice_app/model/diceroll.dart';
 import 'package:dice_app/model/user.dart';
 import 'package:dice_app/service/authService.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,8 +12,6 @@ class Database {
       FirebaseFirestore.instance.collection('users');
   final CollectionReference diceRollCollection =
       FirebaseFirestore.instance.collection('diceRoll');
-  final DatabaseReference databaseReference =
-      FirebaseDatabase.instance.reference();
 
   storeUserData({@required User userData, bool presence}) async {
     DocumentReference documentReferencer = userCollection.doc(uid);
@@ -36,7 +33,7 @@ class Database {
     }).catchError((e) => print(e));
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('user_name', userName);
+    prefs.setString('id', userData.uid);
 
     updateUserPresence(presence: true);
   }
@@ -71,11 +68,16 @@ class Database {
     updateUserPresence(presence: true);
   }
 
-  Stream<QuerySnapshot> retrieveRollUsers() {
-    Stream<QuerySnapshot> queryUsers = diceRollCollection
+  Stream<QuerySnapshot> retrieveRollUsers(String groupChatId) {
+    Stream<QuerySnapshot> queryUsers =  FirebaseFirestore.instance
+        .collection('diceRoll')
+        .doc(groupChatId)
+        .collection(groupChatId).snapshots();
+
+   /* Stream<QuerySnapshot> queryUsers = diceRollCollection
         // .where('presence', isEqualTo: true)
         // .orderBy('last_seen', descending: true)
-        .snapshots();
+        .snapshots();*/
 
     return queryUsers;
   }

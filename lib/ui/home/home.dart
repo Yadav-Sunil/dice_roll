@@ -27,14 +27,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     database.updateUserPresence(presence: true);
+    timer = Timer.periodic(Duration(seconds: 5), (timer){
+      database.retrieveUsers();
+    });
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // updatePresense();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    timer.cancel();
     super.dispose();
   }
 
@@ -42,8 +45,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       database.updateUserPresence(presence: true);
+      timer = Timer.periodic(Duration(seconds: 5), (timer){
+        database.retrieveUsers();
+      });
     } else if (state == AppLifecycleState.paused) {
       database.updateUserPresence(presence: false);
+      timer.cancel();
     }
   }
 
@@ -77,9 +84,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 String presenceString =
                     userData.presence ? 'Online' : '$durationString ago';
 
-                return /*userData.uid == uid
+                return userData.uid == uid
                     ? Container()
-                    :*/
+                    :
                     ListTile(
                   onTap: () {
                     Navigator.push(
