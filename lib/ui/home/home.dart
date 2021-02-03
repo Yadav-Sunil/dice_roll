@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => GameScreen(user: userData),
+                        builder: (context) => GameScreen(user: userData, peerId: userData.uid),
                       ),
                     );
                   },

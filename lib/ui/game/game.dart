@@ -15,24 +15,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class GameScreen extends StatefulWidget {
   UserModel user;
+  String peerId;
 
-  GameScreen({this.user});
+  GameScreen({this.peerId, this.user});
 
   @override
-  GameScreenState createState() =>
-      GameScreenState(user: user, peerId: user?.uid);
+  GameScreenState createState() => GameScreenState(peerId: peerId, user: user);
 }
 
 class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   Database database = Database();
   UserModel user;
-
   String peerId;
   String id;
   String groupChatId;
   SharedPreferences prefs;
+  bool isRolling = false;
 
-  GameScreenState({@required this.user, @required this.peerId});
+  GameScreenState({@required this.peerId, this.user});
 
   @override
   void initState() {
@@ -81,10 +81,12 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       body: Container(
         alignment: Alignment.topCenter,
         child: StreamBuilder<QuerySnapshot>(
-            stream: database.retrieveRollUsers(groupChatId),
+            stream: groupChatId.isNotEmpty?database.retrieveRollUsers(groupChatId):null,
             builder: (_, snapshot) {
               if (snapshot.hasData) {
                 var doc = snapshot.data.docs;
+                List<DiceRollModel> data = List<DiceRollModel>.from(
+                    doc.map((model) => DiceRollModel.fromJson(model.data())));
                 var userName = '';
                 var currentRoll = 0;
                 var rollCount = 0;
@@ -95,18 +97,18 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 var currentRollSecond = 0;
                 var rollCountSecond = 0;
                 var scoreSecond = 0;
-                doc.forEach((element) {
-                  var uid = element['uid'];
+                data.forEach((element) {
+                  var uid = element.uid;
                   if (uid == id) {
-                    userName = element['userName'];
-                    currentRoll = element['currentRoll'];
-                    rollCount = element['rollCount'];
-                    score = element['score'];
+                    userName = element.userName;
+                    currentRoll = element.currentRoll;
+                    rollCount = element.rollCount;
+                    score = element.score;
                   } else {
-                    userNameSecond = element['userName'];
-                    currentRollSecond = element['currentRoll'];
-                    rollCountSecond = element['rollCount'];
-                    scoreSecond = element['score'];
+                    userNameSecond = element.userName;
+                    currentRollSecond = element.currentRoll;
+                    rollCountSecond = element.rollCount;
+                    scoreSecond = element.score;
                   }
                 });
                 return Column(
@@ -132,10 +134,10 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                                       fontSize: ScreenUtil().setSp(20),
                                     ),
                                   ),
-                                  (rollCount > 0 &&
+                                  (rollCount == 10 &&
                                           (rollCount == rollCountSecond))
                                       ? Text(
-                                          '${score < scoreSecond ? "Lose" : (score == scoreSecond?'Draw':"Win")}',
+                                          '${score < scoreSecond ? "Lose" : (score == scoreSecond ? 'Draw' : "Win")}',
                                           style: TextStyle(
                                             fontSize: ScreenUtil().setSp(15),
                                           ),
@@ -159,10 +161,10 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                                       fontSize: ScreenUtil().setSp(20),
                                     ),
                                   ),
-                                  (rollCount >=10 &&
+                                  (rollCount == 10 &&
                                           (rollCount == rollCountSecond))
                                       ? Text(
-                                          '${score > scoreSecond ? "Lose" : (score == scoreSecond?'Draw':"Win")}',
+                                          '${score > scoreSecond ? "Lose" : (score == scoreSecond ? 'Draw' : "Win")}',
                                           style: TextStyle(
                                             fontSize: ScreenUtil().setSp(15),
                                           ),
@@ -176,7 +178,9 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       ),
                     ),
                     Image.asset(
-                      'assets/images/dice$currentRoll.png',
+                      currentRoll == 0
+                          ? ""
+                          : 'assets/images/dice$currentRoll.png',
                       width: ScreenUtil.screenWidth / 2,
                       height: ScreenUtil.screenWidth / 2,
                     ),
@@ -184,10 +188,29 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       onPressed: () {
                         Random random = new Random();
                         int randomNumber = 1 + random.nextInt(7 - 1);
-                        if ((rollCount >= 10 && rollCountSecond >= 10)) {
-                          onResetGame(doc);
-                        } else {
-                          onSendMessage(randomNumber, doc);
+                        if (!isRolling) {
+                          if (rollCount >= 9 &&
+                              (rollCount == rollCountSecond)) {
+                            print(
+                                '---------------- Reset Game ${rollCount + 1} ---------------');
+                            onResetGame(data);
+                          } else if (rollCount >= 0 &&
+                                  rollCount <= 9 &&
+                                  rollCountSecond >= 0 &&
+                                  rollCountSecond <= 9 ||
+                              rollCountSecond == 10) {
+                            print(
+                                '---------------- Update Game ${rollCount + 1} ---------------');
+                            onSendMessage(randomNumber, data);
+                          } else {
+                            print(
+                                '---------------- Null Game $rollCount          $rollCountSecond          ---------------');
+                            if(rollCount == 10&&rollCountSecond == 0) {
+                              print(
+                                  '---------------- Null Game ${rollCount >=0}          ${rollCountSecond >= 0}    ${rollCount <=9}   ${rollCountSecond <= 9}  ${rollCountSecond ==10} ******** ---------------');
+                              onResetGame(data);
+                            }
+                          }
                         }
                       },
                       textColor: Colors.white,
@@ -197,16 +220,25 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         alignment: Alignment.center,
                         color: Colors.blue,
                         width: ScreenUtil().setWidth(150),
-                        child: Text(
-                          rollCount < 10
-                              ? 'Roll'
-                              : (rollCount == rollCountSecond
-                                  ? 'Play Again'
-                                  : 'Wait'),
-                          style: TextStyle(
-                            fontSize: ScreenUtil().setSp(20),
-                          ),
-                        ),
+                        child: isRolling
+                            ? Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: new AlwaysStoppedAnimation<Color>(
+                                    Colors.orange,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                rollCount < 10
+                                    ? 'Roll'
+                                    : ((rollCount >= 10 &&
+                                            (rollCount == rollCountSecond))
+                                        ? 'Play Again'
+                                        : 'Wait'),
+                                style: TextStyle(
+                                  fontSize: ScreenUtil().setSp(20),
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -231,7 +263,7 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 shape: BoxShape.circle,
                 image: new DecorationImage(
                     fit: BoxFit.fill,
-                    image: NetworkImage("${widget?.user?.imageUrl}"))),
+                    image: NetworkImage("${user?.imageUrl}"))),
           ),
           Expanded(
             flex: 1,
@@ -241,11 +273,11 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${widget?.user?.userName}',
+                  '${user?.userName}',
                   style: TextStyle(fontSize: 16),
                 ),
                 Text(
-                  '${widget?.user?.email}',
+                  '${user?.email}',
                   style: TextStyle(fontSize: 15),
                 ),
               ],
@@ -290,8 +322,10 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> onSendMessage(
-      int randomNumber, List<QueryDocumentSnapshot> docs) async {
+  Future<void> onSendMessage(int randomNumber, List<DiceRollModel> data) async {
+    setState(() {
+      isRolling = true;
+    });
     var documentReference = FirebaseFirestore.instance
         .collection('diceRoll')
         .doc(groupChatId)
@@ -299,7 +333,8 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         .doc(id);
 
     DiceRollModel rollData;
-    if (docs.length == 0) {
+    if (data.length == 0) {
+      print('---------------- Update Game ${data.length}  $id---------------');
       rollData = DiceRollModel(
           userName: userName,
           currentRoll: 0,
@@ -307,13 +342,42 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           score: 0,
           isroll: true,
           uid: id);
+    }
+    if (data.length == 1) {
+      DiceRollModel element = data[0];
+      var uid = element.uid;
+      var userName = element.userName;
+      var currentRoll = element.currentRoll;
+      var rollCount = element.rollCount;
+      var score = element.score;
+      if (uid == id) {
+        print('---------------- Update Game  ${data.length}  $uid---------------');
+        rollData = DiceRollModel(
+            userName: userName,
+            currentRoll: randomNumber,
+            rollCount: rollCount >= 10 ? 0 : rollCount + 1,
+            score: rollCount >= 10 ? 0 : score + randomNumber,
+            isroll: true,
+            uid: id);
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          transaction.set(
+            documentReference,
+            rollData.toJson(),
+          );
+        });
+        setState(() {
+          isRolling = false;
+        });
+      }
     } else {
-      docs.forEach((element) {
-        var uid = element['uid'];
-        var currentRoll = element['currentRoll'];
-        var rollCount = element['rollCount'];
-        var score = element['score'];
+      data.forEach((element) async {
+        var uid = element.uid;
+        var userName = element.userName;
+        var currentRoll = element.currentRoll;
+        var rollCount = element.rollCount;
+        var score = element.score;
         if (uid == id) {
+          print('---------------- Update Game  ${data.length}  $uid---------------');
           rollData = DiceRollModel(
               userName: userName,
               currentRoll: randomNumber,
@@ -321,27 +385,25 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               score: rollCount >= 10 ? 0 : score + randomNumber,
               isroll: true,
               uid: id);
-        } else {
-          rollData = DiceRollModel(
-              userName: userName,
-              currentRoll: 0,
-              rollCount: 0,
-              score: 0,
-              isroll: true,
-              uid: id);
+          await FirebaseFirestore.instance.runTransaction((transaction) async {
+            transaction.set(
+              documentReference,
+              rollData.toJson(),
+            );
+          });
+          setState(() {
+            isRolling = false;
+          });
         }
       });
     }
-
-    FirebaseFirestore.instance.runTransaction((transaction) async {
-      transaction.set(
-        documentReference,
-        rollData.toJson(),
-      );
-    });
   }
 
-  onResetGame(List<QueryDocumentSnapshot> docs) {
+  onResetGame(List<DiceRollModel> data) {
+    setState(() {
+      isRolling = true;
+    });
+
     var documentReference = FirebaseFirestore.instance
         .collection('diceRoll')
         .doc(groupChatId)
@@ -349,24 +411,32 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         .doc(id);
 
     DiceRollModel rollData;
-    docs.forEach((element) {
-      var uid = element['uid'];
-      var currentRoll = element['currentRoll'];
-      var rollCount = element['rollCount'];
-      var score = element['score'];
-      rollData = DiceRollModel(
-          userName: userName,
-          currentRoll: 0,
-          rollCount: 0,
-          score: 0,
-          isroll: true,
-          uid: id);
-      FirebaseFirestore.instance.runTransaction((transaction) async {
-        transaction.set(
-          documentReference,
-          rollData.toJson(),
-        );
-      });
+    data.forEach((element) async {
+      var uid = element.uid;
+      if (uid == id) {
+        print('---------------- Reset Game   $uid---------------');
+        var userName = element.userName;
+        var currentRoll = element.currentRoll;
+        var rollCount = element.rollCount;
+        var score = element.score;
+        rollData = DiceRollModel(
+            userName: userName,
+            currentRoll: 0,
+            rollCount: 0,
+            score: 0,
+            isroll: true,
+            uid: uid);
+        var value = await FirebaseFirestore.instance
+            .runTransaction((transaction) async {
+          transaction.set(
+            documentReference,
+            rollData.toJson(),
+          );
+        });
+        setState(() {
+          isRolling = false;
+        });
+      }
     });
   }
 }
