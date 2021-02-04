@@ -74,11 +74,6 @@ class Database {
         .doc(groupChatId)
         .collection(groupChatId).snapshots();
 
-   /* Stream<QuerySnapshot> queryUsers = diceRollCollection
-        // .where('presence', isEqualTo: true)
-        // .orderBy('last_seen', descending: true)
-        .snapshots();*/
-
     return queryUsers;
   }
 

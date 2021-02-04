@@ -16,12 +16,12 @@ String imageUrl;
 
 Future setPeerUserId(String id) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  prefs.setString('peerId',id);
+  prefs.setString('peerId', id);
 }
 
 Future<String> getPeerUserId() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  return prefs.getString('id')??'';
+  return prefs.getString('id') ?? '';
 }
 
 Future getUser() async {
@@ -38,9 +38,14 @@ Future getUser() async {
       name = user.displayName;
       email = user.email;
       imageUrl = user.photoURL;
+      userName = user.displayName;
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      userName = prefs.getString('user_name');
+      if (userName.contains(" ")) {
+        userName = userName.substring(0, name.indexOf(" "));
+      }
+
+      // SharedPreferences prefs = await SharedPreferences.getInstance();
+      // userName = prefs.getString('user_name');
     }
   }
 }
@@ -75,10 +80,10 @@ Future<User> signUp(
     currentUser = auth.currentUser;
     assert(user.uid == currentUser.uid);
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('auth', true);
-    prefs.setString('id', user.uid);
-    authSignedIn = true;
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // prefs.setBool('auth', true);
+    // prefs.setString('id', user.uid);
+    // authSignedIn = true;
 
     print('signInWithGoogle succeeded: $user');
 
@@ -105,9 +110,9 @@ Future<User> signIn({
     // assert(user.photoURL != null);
 
     uid = user.uid;
-    name = user.displayName??"";
+    name = user.displayName ?? "";
     email = user.email;
-    imageUrl = user.photoURL??"";
+    imageUrl = user.photoURL ?? "";
 
     // Only taking the first part of the name, i.e., First Name
     if (name.contains(" ")) {
@@ -120,10 +125,10 @@ Future<User> signIn({
     currentUser = auth.currentUser;
     assert(user.uid == currentUser.uid);
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('auth', true);
-    prefs.setString('id', user.uid);
-    authSignedIn = true;
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // prefs.setBool('auth', true);
+    // prefs.setString('id', user.uid);
+    // authSignedIn = true;
 
     print('signInWithGoogle succeeded: $user');
 
@@ -167,11 +172,11 @@ Future<User> signInWithGoogle() async {
     currentUser = auth.currentUser;
     assert(user.uid == currentUser.uid);
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('auth', true);
-    prefs.setString('user_name', name);
-    prefs.setString('id', user.uid);
-    authSignedIn = true;
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // prefs.setBool('auth', true);
+    // prefs.setString('user_name', name);
+    // prefs.setString('id', user.uid);
+    // authSignedIn = true;
 
     print('signInWithGoogle succeeded: ${user.uid}');
 
