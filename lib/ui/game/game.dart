@@ -65,196 +65,187 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      print('===============  resumed ===================');
       database.updateUserPresence(presence: true);
       FirebaseFirestore.instance
           .collection('users')
           .doc(id)
           .update({'payWith': peerId, 'playing': true});
     } else if (state == AppLifecycleState.paused) {
-      print('===============  paused ===================');
       database.updateUserPresence(presence: false);
       FirebaseFirestore.instance
           .collection('users')
           .doc(id)
           .update({'payWith': '', 'playing': false});
-    } else if (state == AppLifecycleState.detached) {
-      print('===============  detached ===================');
-    } else if (state == AppLifecycleState.inactive) {
-      print('===============  inactive ===================');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: liveGame(),
-      child: Scaffold(
-        appBar: buildAppBar(),
-        body: Container(
-          alignment: Alignment.topCenter,
-          child: StreamBuilder<QuerySnapshot>(
-              stream: groupChatId.isNotEmpty
-                  ? database.retrieveRollUsers(groupChatId)
-                  : null,
-              builder: (_, snapshot) {
-                if (snapshot.hasData) {
-                  var doc = snapshot.data.docs;
-                  List<DiceRollModel> data = List<DiceRollModel>.from(
-                      doc.map((model) => DiceRollModel.fromJson(model.data())));
-                  var userName = '';
-                  var currentRoll = 0;
-                  var rollCount = 0;
-                  var score = 0;
+    return Scaffold(
+      appBar: buildAppBar(),
+      body: Container(
+        alignment: Alignment.topCenter,
+        child: StreamBuilder<QuerySnapshot>(
+            stream: groupChatId.isNotEmpty
+                ? database.retrieveRollUsers(groupChatId)
+                : null,
+            builder: (_, snapshot) {
+              if (snapshot.hasData) {
+                var doc = snapshot.data.docs;
+                List<DiceRollModel> data = List<DiceRollModel>.from(
+                    doc.map((model) => DiceRollModel.fromJson(model.data())));
+                var userName = '';
+                var currentRoll = 0;
+                var rollCount = 0;
+                var score = 0;
 
-                  // user Second
-                  var userNameSecond = '';
-                  var currentRollSecond = 0;
-                  var rollCountSecond = 0;
-                  var scoreSecond = 0;
-                  data.forEach((element) {
-                    var uid = element.uid;
-                    if (uid == id) {
-                      userName = element.userName;
-                      currentRoll = element.currentRoll;
-                      rollCount = element.rollCount;
-                      score = element.score;
-                    } else {
-                      userNameSecond = element.userName;
-                      currentRollSecond = element.currentRoll;
-                      rollCountSecond = element.rollCount;
-                      scoreSecond = element.score;
-                    }
-                  });
-                  return Column(
-                    children: [
-                      Card(
-                        margin: EdgeInsets.all(ScreenUtil().setHeight(20)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      '$userName',
-                                      style: TextStyle(
-                                        fontSize: ScreenUtil().setSp(20),
-                                      ),
+                // user Second
+                var userNameSecond = '';
+                var currentRollSecond = 0;
+                var rollCountSecond = 0;
+                var scoreSecond = 0;
+                data.forEach((element) {
+                  var uid = element.uid;
+                  if (uid == id) {
+                    userName = element.userName;
+                    currentRoll = element.currentRoll;
+                    rollCount = element.rollCount;
+                    score = element.score;
+                  } else {
+                    userNameSecond = element.userName;
+                    currentRollSecond = element.currentRoll;
+                    rollCountSecond = element.rollCount;
+                    scoreSecond = element.score;
+                  }
+                });
+                return Column(
+                  children: [
+                    Card(
+                      margin: EdgeInsets.all(ScreenUtil().setHeight(20)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '$userName',
+                                    style: TextStyle(
+                                      fontSize: ScreenUtil().setSp(20),
                                     ),
-                                    Text(
-                                      '$score',
-                                      style: TextStyle(
-                                        fontSize: ScreenUtil().setSp(20),
-                                      ),
+                                  ),
+                                  Text(
+                                    '$score',
+                                    style: TextStyle(
+                                      fontSize: ScreenUtil().setSp(20),
                                     ),
-                                    (rollCount == 10 &&
-                                            (rollCount == rollCountSecond))
-                                        ? Text(
-                                            '${score < scoreSecond ? "Lose" : (score == scoreSecond ? 'Draw' : "Win")}',
-                                            style: TextStyle(
-                                              fontSize: ScreenUtil().setSp(15),
-                                            ),
-                                          )
-                                        : SizedBox.shrink(),
-                                  ],
-                                ),
+                                  ),
+                                  (rollCount == 10 &&
+                                          (rollCount == rollCountSecond))
+                                      ? Text(
+                                          '${score < scoreSecond ? "Lose" : (score == scoreSecond ? 'Draw' : "Win")}',
+                                          style: TextStyle(
+                                            fontSize: ScreenUtil().setSp(15),
+                                          ),
+                                        )
+                                      : SizedBox.shrink(),
+                                ],
                               ),
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      '$userNameSecond',
-                                      style: TextStyle(
-                                        fontSize: ScreenUtil().setSp(20),
-                                      ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '$userNameSecond',
+                                    style: TextStyle(
+                                      fontSize: ScreenUtil().setSp(20),
                                     ),
-                                    Text(
-                                      '$scoreSecond',
-                                      style: TextStyle(
-                                        fontSize: ScreenUtil().setSp(20),
-                                      ),
+                                  ),
+                                  Text(
+                                    '$scoreSecond',
+                                    style: TextStyle(
+                                      fontSize: ScreenUtil().setSp(20),
                                     ),
-                                    (rollCount == 10 &&
-                                            (rollCount == rollCountSecond))
-                                        ? Text(
-                                            '${score > scoreSecond ? "Lose" : (score == scoreSecond ? 'Draw' : "Win")}',
-                                            style: TextStyle(
-                                              fontSize: ScreenUtil().setSp(15),
-                                            ),
-                                          )
-                                        : SizedBox.shrink(),
-                                  ],
-                                ),
+                                  ),
+                                  (rollCount == 10 &&
+                                          (rollCount == rollCountSecond))
+                                      ? Text(
+                                          '${score > scoreSecond ? "Lose" : (score == scoreSecond ? 'Draw' : "Win")}',
+                                          style: TextStyle(
+                                            fontSize: ScreenUtil().setSp(15),
+                                          ),
+                                        )
+                                      : SizedBox.shrink(),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                      Image.asset(
-                        currentRoll == 0
-                            ? ""
-                            : 'assets/images/dice$currentRoll.png',
-                        width: ScreenUtil.screenWidth / 2,
-                        height: ScreenUtil.screenWidth / 2,
-                      ),
-                      RaisedButton(
-                        onPressed: () {
-                          Random random = new Random();
-                          int randomNumber = 1 + random.nextInt(7 - 1);
-                          if (!isRolling) {
-                            if (rollCount >= 9 &&
-                                (rollCount == rollCountSecond)) {
+                    ),
+                    Image.asset(
+                      currentRoll == 0
+                          ? ""
+                          : 'assets/images/dice$currentRoll.png',
+                      width: ScreenUtil.screenWidth / 2,
+                      height: ScreenUtil.screenWidth / 2,
+                    ),
+                    RaisedButton(
+                      onPressed: () {
+                        Random random = new Random();
+                        int randomNumber = 1 + random.nextInt(7 - 1);
+                        if (!isRolling) {
+                          if (rollCount >= 9 &&
+                              (rollCount == rollCountSecond)) {
+                            onResetGame(data);
+                          } else if (rollCount >= 0 &&
+                                  rollCount <= 9 &&
+                                  rollCountSecond >= 0 &&
+                                  rollCountSecond <= 9 ||
+                              rollCountSecond == 10) {
+                            onSendMessage(randomNumber, data);
+                          } else {
+                            if (rollCount == 10 && rollCountSecond == 0) {
                               onResetGame(data);
-                            } else if (rollCount >= 0 &&
-                                    rollCount <= 9 &&
-                                    rollCountSecond >= 0 &&
-                                    rollCountSecond <= 9 ||
-                                rollCountSecond == 10) {
-                              onSendMessage(randomNumber, data);
-                            } else {
-                              if (rollCount == 10 && rollCountSecond == 0) {
-                                onResetGame(data);
-                              }
                             }
                           }
-                        },
-                        textColor: Colors.white,
-                        padding: const EdgeInsets.all(0.0),
-                        child: Container(
-                          height: ScreenUtil().setHeight(45),
-                          alignment: Alignment.center,
-                          color: Colors.blue,
-                          width: ScreenUtil().setWidth(150),
-                          child: isRolling
-                              ? Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor:
-                                        new AlwaysStoppedAnimation<Color>(
-                                      Colors.orange,
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  rollCount < 10
-                                      ? 'Roll'
-                                      : ((rollCount >= 10 &&
-                                              (rollCount == rollCountSecond))
-                                          ? 'Play Again'
-                                          : 'Wait'),
-                                  style: TextStyle(
-                                    fontSize: ScreenUtil().setSp(20),
+                        }
+                      },
+                      textColor: Colors.white,
+                      padding: const EdgeInsets.all(0.0),
+                      child: Container(
+                        height: ScreenUtil().setHeight(45),
+                        alignment: Alignment.center,
+                        color: Colors.blue,
+                        width: ScreenUtil().setWidth(150),
+                        child: isRolling
+                            ? Center(
+                                child: CircularProgressIndicator(
+                                  valueColor:
+                                      new AlwaysStoppedAnimation<Color>(
+                                    Colors.orange,
                                   ),
                                 ),
-                        ),
+                              )
+                            : Text(
+                                rollCount < 10
+                                    ? 'Roll'
+                                    : ((rollCount >= 10 &&
+                                            (rollCount == rollCountSecond))
+                                        ? 'Play Again'
+                                        : 'Wait'),
+                                style: TextStyle(
+                                  fontSize: ScreenUtil().setSp(20),
+                                ),
+                              ),
                       ),
-                    ],
-                  );
-                }
-                return Container();
-              }),
-        ),
+                    ),
+                  ],
+                );
+              }
+              return Container();
+            }),
       ),
     );
   }
@@ -313,7 +304,6 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       Navigator.of(context).pushNamedAndRemoveUntil(
           RouteName.USER_LOGIN, (Route<dynamic> route) => false,
           arguments: LoginScreen());
-      liveGame();
     }
   }
 
@@ -333,9 +323,9 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   Future<void> onSendMessage(int randomNumber, List<DiceRollModel> data) async {
-    // setState(() {
-    //   isRolling = true;
-    // });
+    setState(() {
+      isRolling = true;
+    });
     var documentReference = FirebaseFirestore.instance
         .collection('diceRoll')
         .doc(groupChatId)
@@ -352,9 +342,9 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           isroll: true,
           uid: id);
       await documentReference.set(rollData.toJson());
-      // setState(() {
-      //   isRolling = false;
-      // });
+      setState(() {
+        isRolling = false;
+      });
     }
     if (data.length == 1) {
       DiceRollModel element = data[0];
@@ -372,9 +362,9 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           isroll: true,
           uid: id);
       await documentReference.set(rollData.toJson());
-      // setState(() {
-      //   isRolling = false;
-      // });
+      setState(() {
+        isRolling = false;
+      });
       // }
     } else {
       data.forEach((element) async {
@@ -392,18 +382,18 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               isroll: true,
               uid: id);
           await documentReference.set(rollData.toJson());
-          // setState(() {
-          //   isRolling = false;
-          // });
+          setState(() {
+            isRolling = false;
+          });
         }
       });
     }
   }
 
   onResetGame(List<DiceRollModel> data) {
-    // setState(() {
-    //   isRolling = true;
-    // });
+    setState(() {
+      isRolling = true;
+    });
 
     var documentReference = FirebaseFirestore.instance
         .collection('diceRoll')
@@ -430,25 +420,10 @@ class GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             rollData.toJson(),
           );
         });
-        // setState(() {
-        //   isRolling = false;
-        // });
+        setState(() {
+          isRolling = false;
+        });
       }
     });
-  }
-
-  liveGame() {
-    print('===============  liveGame ===================');
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(id)
-        .update({'payWith': peerId, 'playing': false});
-
-    FirebaseFirestore.instance
-        .collection('diceRoll')
-        .doc(groupChatId)
-        .collection(groupChatId)
-        .doc(id)
-        .update({'isroll': false});
   }
 }
